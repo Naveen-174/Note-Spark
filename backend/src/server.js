@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
 
 import notesRoutes from "./routes/notesRoutes.js";
 import { connectDB } from "./config/db.js";
@@ -13,24 +14,32 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://note-spark-nu.vercel.app",
-    ],
+    
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
 );
 
+
 app.use(express.json());
 app.use(rateLimiter);
+
+const __dirname=path.resolve()
 
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/notes", notesRoutes);
+if(process.env.NODE_ENV==="production")
+{
+  app.use(express.static(path.join(__dirname,"../frontend/dist")))
 
+app.get("*",(req,res)=>{
+  res.sendFile(path.join(__dirname,"../frontend","dist","index.html"))
+})
+}
 // Health Check Route
 app.get("/", (req, res) => {
   res.json({
